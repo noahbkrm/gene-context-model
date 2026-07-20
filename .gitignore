@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# TCGA raw datasets
+data/*.gz
+
+# processed TCGA datasets
+data/processed/*.parquet
+
+data/Survival_SupplementalTable_S1_20171025_xena_sp
