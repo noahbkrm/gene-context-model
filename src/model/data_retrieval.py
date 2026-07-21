@@ -1,6 +1,5 @@
 import pandas as pd
 import mygene
-import pyarrow
 
 def get_clinical_data():
     clinical = pd.read_csv(
@@ -56,7 +55,6 @@ def get_rna_data():
 
 def tcga_patient_id(sample):
     return "-".join(sample.split("-")[:3])
-    
 
 if __name__ == "__main__":
     clinical = get_clinical_data()
