@@ -3,7 +3,8 @@ __all__ = [
     "BATCH",
     "LEARNING_RATE",
     "EMA_PARAM",
-    "NUM_EPOCHS"
+    "NUM_EPOCHS",
+    "MASK_RATIO"
 ]
 
 HIDDEN_DIM = 512
@@ -11,3 +12,4 @@ BATCH = 64
 LEARNING_RATE = 1e-4
 EMA_PARAM = 0.996
 NUM_EPOCHS = 10
+MASK_RATIO = 0.15
