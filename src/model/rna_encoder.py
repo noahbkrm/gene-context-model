@@ -23,11 +23,6 @@ class RnaEmbedding(nn.Module):
         nn.init.normal_(self.missing_bias, std = 0.02)
         self.layernorm = nn.LayerNorm(hidden_dim)
         self.gene_embedding = nn.Embedding(stats.n_genes, hidden_dim)
-        self.register_buffer(  # Static so it won't be treated as a parameter to be optimized
-            "gene_ids",
-            torch.arange(stats.n_genes),
-            persistent=False
-        )
     
     @staticmethod
     def fit(train_df: pd.DataFrame) -> RnaStats: # Fitting RnaStats on training data
@@ -52,20 +47,17 @@ class RnaEmbedding(nn.Module):
 
         expression_tensor = torch.tensor(df.values, dtype=torch.float32)
 
-        mask_tensor = torch.tensor(observed_mask.values, dtype=torch.float32)
+        mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32))
 
         return expression_tensor, mask_tensor
     
     def forward(self, expression_tensor, mask):
 
-        gene_emb = self.gene_embedding(self.gene_ids)
-
         expression_emb = self.expression(expression_tensor.unsqueeze(-1))
         was_missing_exp = (1 - mask).unsqueeze(-1)
         expression_emb = expression_emb + was_missing_exp * self.missing_bias
 
-        combined_emb = gene_emb + expression_emb # Tokens
-        return self.layernorm(combined_emb)
+        return self.layernorm(expression_emb)
 
 if __name__ == "__main__":
     print()
