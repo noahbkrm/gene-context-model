@@ -1,34 +1,32 @@
-import torch
 import torch.nn as nn
-import numpy as np
-import pandas as pd
 from constants import HIDDEN_DIM, BATCH
 
 from cnv_encoder import CNVEmbedding
 from snv_encoder import SNVEmbedding
-from clinical_encoder import ClinicalEmbedding
 from rna_encoder import RnaEmbedding, RnaStats
-from fusion import TokenEmbedding
-from attention_pooling import AttentionPooling
-from mask import SNVMask
+from fusion import GeneTokenEmbedding
+from transformer import TransformerBlock
+from projection import Projection
+from mask import GeneMask
 
-class PatientModel(nn.Module):
-    def __init__(self, rna_stats: RnaStats, n_genes: int, n_variant_genes: int, hidden_dim: int = HIDDEN_DIM, batch_size: int = BATCH):
+class GeneModel(nn.Module):
+    def __init__(self, rna_stats: RnaStats, n_genes: int, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
-        self.cnv_encoder =  CNVEmbedding(n_variant_genes, hidden_dim)
-        self.snv_encoder = SNVEmbedding(n_variant_genes, hidden_dim)
-        self.snv_masker = SNVMask(hidden_dim)
-        self.clinical_encoder = ClinicalEmbedding(hidden_dim)
+        self.cnv_encoder =  CNVEmbedding(n_genes, hidden_dim)
+        self.snv_encoder = SNVEmbedding(n_genes, hidden_dim)
         self.rna_encoder = RnaEmbedding(rna_stats, hidden_dim)
-        self.combine_tokens = TokenEmbedding(hidden_dim)
-        self.attention_pooling = AttentionPooling(hidden_dim)
+        self.combine_tokens = GeneTokenEmbedding(hidden_dim)
+        self.projection = Projection(hidden_dim)
+        self.mask = GeneMask(hidden_dim)
 
-    def forward(self, batch, mask_snv = False):
-        clinical_tokens = self.clinical_encoder(
-            batch["clinical_cat"],
-            batch["clinical_cont"],
-            batch["clinical_mask"],
-        )
+        self.blocks = nn.ModuleList([
+            TransformerBlock(),
+            TransformerBlock(),
+            TransformerBlock(),
+            TransformerBlock(),
+        ])
+
+    def forward(self, batch, image_binary: bool): # image_binary: True is student, False is teacher
 
         rna_tokens = self.rna_encoder(
             batch["rna_expression"],

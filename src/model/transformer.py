@@ -56,3 +56,14 @@ class TransformerBlock(nn.Module):
         x = x + ffn_out
 
         return x
+
+class TransformerEncoder(nn.Module):
+    def __init__(self):
+        self.blocks = nn.ModuleList([
+            TransformerBlock(),
+            TransformerBlock(),
+            TransformerBlock(),
+            TransformerBlock(),
+        ])
+    def forward(self, x):
+        return self.blocks(x)

@@ -1,4 +1,3 @@
-# Main block with merging token, multi-head attention pooling (1-head), query pooling
 import torch
 import torch.nn as nn
 from constants import HIDDEN_DIM
