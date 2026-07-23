@@ -130,8 +130,8 @@ def training(
         z_student.std().item()
     )
     cos = F.cosine_similarity(
-        z_student.detach(),
-        z_teacher.detach(),
+        z_student[student_mask],
+        z_teacher[student_mask],
         dim=-1
     ).mean()
 
