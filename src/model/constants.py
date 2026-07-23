@@ -4,7 +4,9 @@ __all__ = [
     "LEARNING_RATE",
     "EMA_PARAM",
     "NUM_EPOCHS",
-    "MASK_RATIO"
+    "MASK_RATIO",
+    "T_TEACHER",
+    "T_STUDENT"
 ]
 
 HIDDEN_DIM = 512
@@ -13,3 +15,5 @@ LEARNING_RATE = 1e-4
 EMA_PARAM = 0.996
 NUM_EPOCHS = 10
 MASK_RATIO = 0.15
+T_TEACHER = 0.04
+T_STUDENT = 0.1

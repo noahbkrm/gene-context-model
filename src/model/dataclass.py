@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from rna_encoder import RnaStats, RnaEmbedding
 from cnv_encoder import CNVEmbedding
 from snv_encoder import SNVEmbedding
+from constants import BATCH
 
 class TCGA_Dataset(torch.utils.data.Dataset):
 
@@ -37,10 +38,10 @@ class TCGA_Dataset(torch.utils.data.Dataset):
             "cnv_mask": self.cnv_mask[idx],
         }
 
-def get_loader(dataset, shuffle: bool = True):
+def get_loader(dataset, shuffle: bool = True, batch_size: int = BATCH):
     loader = DataLoader(
         dataset,
-        batch_size=32,
+        batch_size=batch_size,
         shuffle=shuffle,
         pin_memory=True
     )
