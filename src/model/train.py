@@ -17,10 +17,14 @@ def initialize_models(
         hidden_dim: int = HIDDEN_DIM,
     ):
 
-    tokenizer = GeneTokenizer(
+    student_tokenizer = GeneTokenizer(
         n_genes,
         hidden_dim,
     ).to(device)
+
+    teacher_tokenizer = copy.deepcopy(student_tokenizer)
+
+    masker = GeneMask(hidden_dim).to(device)
     
     student_model = GeneModel(hidden_dim).to(device)
     teacher_model = copy.deepcopy(student_model).to(device) # Set teacher to match student
@@ -28,18 +32,14 @@ def initialize_models(
     for param in teacher_model.parameters():
         param.requires_grad = False
 
-    # Move models to GPU
-    student_model.to(device)
-    teacher_model.to(device)
-
     optimizer = torch.optim.AdamW(
-        list(tokenizer.parameters()) +
+        list(student_tokenizer.parameters()) +
         list(student_model.parameters()),
         lr=LEARNING_RATE,
         weight_decay=1e-2,
     )
 
-    return teacher_model, student_model, tokenizer, optimizer
+    return teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker
 
 def update_teacher_model(
     teacher_model: nn.Module,
@@ -60,15 +60,19 @@ def update_teacher_model(
 def training(
         teacher_model: GeneModel,
         student_model: GeneModel,
-        tokenizer: GeneTokenizer,
+        teacher_tokenizer: GeneTokenizer,
+        student_tokenizer: GeneTokenizer,
         loader: DataLoader,
         optimizer,
         scaler,
+        masker,
         ema_param: float = EMA_PARAM,
     ):
 
     student_model.train()
+    student_tokenizer.train()
     teacher_model.eval()
+    teacher_tokenizer.eval()
     total_loss = 0
     for batch in loader:
 
@@ -86,11 +90,11 @@ def training(
         
         with torch.amp.autocast("cuda"):
 
-            tokens = tokenizer(batch_gpu)
+            student_raw_tokens = student_tokenizer(batch_gpu)
 
-            student_tokens, student_mask = GeneMask()(tokens)
+            student_tokens, student_mask = masker(student_raw_tokens)
 
-            teacher_tokens = tokens.clone()
+            teacher_tokens = teacher_tokenizer(batch_gpu)
 
             with torch.no_grad():
                 teacher = teacher_model(teacher_tokens) # Calculate teacher
@@ -103,13 +107,16 @@ def training(
             # Apply softmax and temp, then calculate cross-entropy loss
             teacher_probs = torch.softmax(z_teacher/T_TEACHER, dim=-1)
             student_log_probs = torch.log_softmax(z_student/T_STUDENT, dim=-1)
-            loss = -(teacher_probs * student_log_probs).sum(dim=-1).mean()
+
+            ce = -(teacher_probs * student_log_probs).sum(dim=-1)
+            loss = ce[student_mask].mean()
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
 
         update_teacher_model(teacher_model, student_model, ema_param)
+        update_teacher_model(teacher_tokenizer, student_tokenizer, ema_param)
         total_loss += loss.item()
     
     avg_loss = total_loss / len(loader)
@@ -119,8 +126,8 @@ def training(
         z_student.std().item()
     )
     cos = F.cosine_similarity(
-        z_student,
-        z_teacher,
+        z_student.detach(),
+        z_teacher.detach(),
         dim=-1
     ).mean()
 
@@ -144,19 +151,21 @@ def generate_embeddings(model, loader, device):
 
             batch_gpu = {}
 
-        for k,v in batch.items():
+            for k,v in batch.items():
 
-            if torch.is_tensor(v):
-                batch_gpu[k] = v.to(device)
+                if torch.is_tensor(v):
+                    batch_gpu[k] = v.to(device)
 
-            else:
-                batch_gpu[k] = v
+                else:
+                    batch_gpu[k] = v
 
-            out = model(batch)
+                tokens = student_tokenizer(batch_gpu)
 
-            embeddings.append(
-                out["embedding"].cpu()
-            )
+                out = model(tokens)
+
+                embeddings.append(
+                    out["embedding"].cpu()
+                )
 
     return torch.cat(embeddings, dim=0), model.gene_names
 
@@ -169,7 +178,7 @@ if __name__ == "__main__":
 
     loader = get_loader(train_dataset)
 
-    teacher_model, student_model, tokenizer, optimizer = initialize_models(
+    teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker = initialize_models(
         n_genes=rna_stats.n_genes,
         hidden_dim = HIDDEN_DIM
     )
@@ -180,21 +189,24 @@ if __name__ == "__main__":
         loss = training(
             teacher_model,
             student_model,
-            tokenizer,
+            teacher_tokenizer,
+            student_tokenizer,
             loader,
             optimizer,
             scaler,
+            masker
         ) 
         print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Loss: {loss:.4f}") 
     
-    torch.save(  # Save JEPA checkpoint for reference later if needed
+    torch.save(
         {
+            "tokenizer": student_tokenizer.state_dict(),
             "student_model": student_model.state_dict(),
             "teacher_model": teacher_model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "epoch": epoch,
         },
-        "jepa_checkpoint.pt"
+        "jepa_checkpoint.pt",
     )
 
     student_model.eval() # Switch student model into eval mode
