@@ -23,8 +23,8 @@ class CNVEmbedding(nn.Module):
 
         df = df + 2 # Shift all values to be >= 0
         df = df.fillna(0).astype("int64") # Placeholder value; missing handled by mask
-        cnv_state_tensor = torch.from_numpy(df.to_numpy(dtype=np.int64))
-        mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32))
+        cnv_state_tensor = torch.from_numpy(df.to_numpy(dtype=np.int64).copy())
+        mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32).copy())
         return cnv_state_tensor, mask_tensor
     
     def forward(self, cnv_state_tensor, mask):

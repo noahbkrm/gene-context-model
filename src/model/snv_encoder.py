@@ -21,8 +21,8 @@ class SNVEmbedding(nn.Module):
         observed_mask = (~df.isna()).astype(int)
 
         df = df.fillna(0).astype("int64") # fill missing values as 3rd item (index 2)
-        snv_state_tensor = torch.from_numpy(df.to_numpy(dtype=np.int64))
-        mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32))
+        snv_state_tensor = torch.from_numpy(df.to_numpy(dtype=np.int64).copy())
+        mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32).copy())
         return snv_state_tensor, mask_tensor
     
     def forward(self, snv_state_tensor, mask):

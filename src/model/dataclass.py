@@ -7,27 +7,13 @@ from snv_encoder import SNVEmbedding
 class TCGA_Dataset(torch.utils.data.Dataset):
 
     def __init__(self, data, rna_stats: RnaStats):
-        self.rna = torch.tensor(
-            data["rna"].values,
-            dtype=torch.float32
-        )
-            
-        self.snv = torch.tensor(
-            data["snv"].values,
-            dtype=torch.float32
-        )
-
-        self.cnv = torch.tensor(
-            data["cnv"].values,
-            dtype=torch.float32
-        )
 
         self.patient_ids = data["clinical"].index.tolist()
         self.gene_names = data["gene_names"]
 
-        rna_expression, rna_mask = RnaEmbedding.prepare(self.rna, rna_stats)
-        cnv_states, cnv_mask = CNVEmbedding.prepare(self.cnv)
-        snv_states, snv_mask = SNVEmbedding.prepare(self.snv)
+        rna_expression, rna_mask = RnaEmbedding.prepare(data["rna"], rna_stats)
+        cnv_states, cnv_mask = CNVEmbedding.prepare(data["cnv"])
+        snv_states, snv_mask = SNVEmbedding.prepare(data["snv"])
 
         self.rna_expression = rna_expression
         self.rna_mask = rna_mask
@@ -37,8 +23,7 @@ class TCGA_Dataset(torch.utils.data.Dataset):
         self.snv_mask = snv_mask
 
     def __len__(self):
-        return len(self.rna)
-
+        return len(self.rna_expression)
 
     def __getitem__(self, idx):
 
@@ -68,20 +53,15 @@ if __name__ == "__main__":
 
     data = return_dataset("debug")
 
-    dataset = TCGA_Dataset(data)
+    rna_stats = RnaEmbedding.fit(data["rna"])
+
+    dataset = TCGA_Dataset(data, rna_stats)
 
     loader = get_loader(dataset)
 
     batch = next(iter(loader))
 
-    print(batch["rna"].shape)
-    print(batch["snv"].shape)
-    print(batch["cnv"].shape)
+    print(batch["rna_expression"].shape)
+    print(batch["snv_mask"].shape)
+    print(batch["cnv_states"].shape)
     print(batch["patient_id"][:5])
-
-    idx = 0
-
-    print(batch["patient_id"][idx])
-    print(batch["rna"][idx][:10])
-    print(batch["snv"][idx][:10])
-    print(batch["cnv"][idx][:10])
