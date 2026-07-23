@@ -108,6 +108,8 @@ def reduce_genes(data, n_genes):
     for name in ["rna", "cnv", "snv"]:
         data[name] = data[name][top_genes]
 
+    data["gene_names"] = top_genes.tolist()
+
     return data
 
 if __name__ == "__main__":

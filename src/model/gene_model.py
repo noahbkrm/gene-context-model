@@ -3,9 +3,9 @@ from constants import HIDDEN_DIM
 
 from cnv_encoder import CNVEmbedding
 from snv_encoder import SNVEmbedding
-from rna_encoder import RnaEmbedding, RnaStats
+from rna_encoder import RnaEmbedding
 from fusion import GeneTokenEmbedding
-from transformer import TransformerBlock
+from transformer import TransformerEncoder
 from projection import Projection
 from mask import GeneMask
 
@@ -19,12 +19,7 @@ class GeneModel(nn.Module):
         self.projection = Projection(hidden_dim)
         self.mask = GeneMask(hidden_dim)
 
-        self.blocks = nn.ModuleList([
-            TransformerBlock(),
-            TransformerBlock(),
-            TransformerBlock(),
-            TransformerBlock(),
-        ])
+        self.transformer = TransformerEncoder()
 
     def forward(self, batch): # image_binary: True is student, False is teacher
 
@@ -45,10 +40,14 @@ class GeneModel(nn.Module):
 
         token_emb = self.combine_tokens(rna_tokens, snv_tokens, cnv_tokens)
 
-        masked_emb = self.mask(token_emb)
+        masked_emb, gene_mask = self.mask(token_emb)
 
-        transformed_emb = self.blocks(masked_emb)
+        transformed_emb = self.transformer(masked_emb)
 
         proj_emb = self.projection(transformed_emb)
 
-        return proj_emb
+        return {
+            "projection": proj_emb,
+            "embedding": transformed_emb,
+            "mask": gene_mask
+        }

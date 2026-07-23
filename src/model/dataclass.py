@@ -29,7 +29,6 @@ class TCGA_Dataset(torch.utils.data.Dataset):
 
         return {
             "patient_id": self.patient_ids[idx],
-            "gene_names": self.gene_names[idx],
             "rna_expression": self.rna_expression[idx],
             "rna_mask": self.rna_mask[idx],
             "snv_states": self.snv_states[idx],
