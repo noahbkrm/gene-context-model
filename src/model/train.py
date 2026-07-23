@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import pandas as pd
+from tqdm import tqdm
 from constants import *
 from gene_model import GeneModel, GeneTokenizer
 from rna_encoder import RnaStats, RnaEmbedding
@@ -74,7 +75,10 @@ def training(
     teacher_model.eval()
     teacher_tokenizer.eval()
     total_loss = 0
-    for batch in loader:
+
+    progress = tqdm(loader, desc="Training", leave=False)
+
+    for batch in progress:
 
         optimizer.zero_grad()
 
@@ -186,6 +190,8 @@ if __name__ == "__main__":
     scaler = torch.amp.GradScaler("cuda")
 
     for epoch in range(NUM_EPOCHS):
+        print(f"\nEpoch {epoch+1}/{NUM_EPOCHS}")
+
         loss = training(
             teacher_model,
             student_model,
@@ -196,7 +202,7 @@ if __name__ == "__main__":
             scaler,
             masker
         ) 
-        print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Loss: {loss:.4f}") 
+        print(f"Epoch Loss: {loss:.4f}") 
     
     torch.save(
         {
