@@ -1,5 +1,5 @@
 import torch.nn as nn
-from constants import HIDDEN_DIM, BATCH
+from constants import HIDDEN_DIM
 
 from cnv_encoder import CNVEmbedding
 from snv_encoder import SNVEmbedding
@@ -10,12 +10,12 @@ from projection import Projection
 from mask import GeneMask
 
 class GeneModel(nn.Module):
-    def __init__(self, rna_stats: RnaStats, n_genes: int, hidden_dim: int = HIDDEN_DIM):
+    def __init__(self, n_genes: int, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
-        self.cnv_encoder =  CNVEmbedding(n_genes, hidden_dim)
-        self.snv_encoder = SNVEmbedding(n_genes, hidden_dim)
-        self.rna_encoder = RnaEmbedding(rna_stats, hidden_dim)
-        self.combine_tokens = GeneTokenEmbedding(hidden_dim)
+        self.cnv_encoder =  CNVEmbedding(hidden_dim)
+        self.snv_encoder = SNVEmbedding(hidden_dim)
+        self.rna_encoder = RnaEmbedding(hidden_dim)
+        self.combine_tokens = GeneTokenEmbedding(n_genes, hidden_dim)
         self.projection = Projection(hidden_dim)
         self.mask = GeneMask(hidden_dim)
 
@@ -26,25 +26,29 @@ class GeneModel(nn.Module):
             TransformerBlock(),
         ])
 
-    def forward(self, batch, image_binary: bool): # image_binary: True is student, False is teacher
+    def forward(self, batch): # image_binary: True is student, False is teacher
 
         rna_tokens = self.rna_encoder(
             batch["rna_expression"],
             batch["rna_mask"],
         )
 
-        cnv_tokens = self.cnv_encoder(
-            batch["cnv_states"],
-        )
-
         snv_tokens = self.snv_encoder(
             batch["snv_states"],
+            batch["snv_mask"]
         )
 
-        if mask_snv:
-            snv_tokens = self.snv_masker(snv_tokens)
+        cnv_tokens = self.cnv_encoder(
+            batch["cnv_states"],
+            batch["cnv_mask"]
+        )
 
-        token_emb = self.combine_tokens(clinical_tokens, rna_tokens, cnv_tokens, snv_tokens)
-        patient_emb = self.attention_pooling(token_emb)
+        token_emb = self.combine_tokens(rna_tokens, snv_tokens, cnv_tokens)
 
-        return patient_emb
+        masked_emb = self.mask(token_emb)
+
+        transformed_emb = self.blocks(masked_emb)
+
+        proj_emb = self.projection(transformed_emb)
+
+        return proj_emb

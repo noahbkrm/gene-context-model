@@ -16,13 +16,12 @@ class RnaStats:
         return len(self.train_gene_mean)
 
 class RnaEmbedding(nn.Module):
-    def __init__(self,  stats: RnaStats, hidden_dim: int = HIDDEN_DIM):
+    def __init__(self, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
         self.expression = nn.Linear(1, hidden_dim)
         self.missing_bias = nn.Parameter(torch.empty(hidden_dim))
         nn.init.normal_(self.missing_bias, std = 0.02)
         self.layernorm = nn.LayerNorm(hidden_dim)
-        self.gene_embedding = nn.Embedding(stats.n_genes, hidden_dim)
     
     @staticmethod
     def fit(train_df: pd.DataFrame) -> RnaStats: # Fitting RnaStats on training data

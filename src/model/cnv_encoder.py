@@ -6,9 +6,8 @@ import pandas as pd
 from constants import HIDDEN_DIM
 
 class CNVEmbedding(nn.Module):
-    def __init__(self, n_genes: int, hidden_dim: int = HIDDEN_DIM):
+    def __init__(self, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
-        self.gene_embedding = nn.Embedding(n_genes, hidden_dim)
         self.cnv_state_embedding = nn.Embedding(5, hidden_dim) # -2, -1, 0, 1, 2
         self.missing_bias = nn.Parameter(torch.empty(hidden_dim))
         nn.init.normal_(self.missing_bias, std = 0.02)

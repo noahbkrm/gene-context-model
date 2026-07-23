@@ -5,10 +5,9 @@ import pandas as pd
 from constants import HIDDEN_DIM
 
 class SNVEmbedding(nn.Module):
-    def __init__(self, n_genes: int, hidden_dim: int = HIDDEN_DIM):
+    def __init__(self, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
-        self.gene_embedding = nn.Embedding(n_genes, hidden_dim)
-        self.snv_state_embedding = nn.Embedding(2, hidden_dim) # 0, 1, NA
+        self.snv_state_embedding = nn.Embedding(2, hidden_dim) # 0, 1
         self.missing_bias = nn.Parameter(torch.empty(hidden_dim))
         nn.init.normal_(self.missing_bias, std = 0.02)
         self.layernorm = nn.LayerNorm(hidden_dim)
