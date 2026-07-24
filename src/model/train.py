@@ -118,7 +118,7 @@ def training(
 
     progress = tqdm(loader, desc="Training", leave=False)
 
-    for batch in progress:
+    for batch_idx, batch in enumerate(progress):
 
         optimizer.zero_grad()
 
@@ -161,6 +161,11 @@ def training(
 
             var_loss, cov_loss = vicreg_loss(z_masked)
 
+            if batch_idx == 0:
+                print("DINO:", jepa_loss.item())
+                print("Var :", var_loss.item())
+                print("Cov :", cov_loss.item())
+
             loss = (
                 jepa_loss
                 +
@@ -190,6 +195,16 @@ def training(
     ).mean()
 
     print(f"Cosine similarity: {cos.item():.4f}")
+
+    dim_std = z_masked.std(dim=0)
+
+    print("Mean dim std:", dim_std.mean())
+    print("Min dim std :", dim_std.min())
+    print("Max dim std :", dim_std.max())
+    print(
+        "Fraction below gamma:",
+        (dim_std < VICREG_GAMMA).float().mean()
+    )
 
     return avg_loss
 

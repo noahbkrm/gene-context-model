@@ -92,23 +92,65 @@ def return_dataset(cohort: str):
             f"Unknown cohort: {cohort}"
         )
 
-def reduce_genes(data, n_genes):
+def reduce_genes(data, n_genes, random_state = 42):
 
     rna = data["rna"]
 
     variance = rna.var(axis=0)
 
-    top_genes = (
-        variance
-        .sort_values(ascending=False)
-        .head(n_genes)
-        .index
+    # Divide genes into 10 variance bins
+    bins = pd.qcut(
+        variance,
+        q=10,
+        labels=False,
+        duplicates="drop"
     )
 
-    for name in ["rna", "cnv", "snv"]:
-        data[name] = data[name][top_genes]
+    selected = []
 
-    data["gene_names"] = top_genes.tolist()
+    genes_per_bin = n_genes // 10
+
+    for b in sorted(bins.unique()):
+
+        genes_in_bin = variance[
+            bins == b
+        ].index
+
+        sampled = (
+            genes_in_bin
+            .to_series()
+            .sample(
+                n=genes_per_bin,
+                random_state=random_state
+            )
+            .tolist()
+        )
+
+        selected.extend(sampled)
+
+    # If n_genes is not divisible by 10
+    remainder = n_genes - len(selected)
+
+    if remainder > 0:
+
+        remaining_genes = (
+            variance.index
+            .difference(selected)
+        )
+
+        selected.extend(
+            remaining_genes.to_series()
+            .sample(
+                n=remainder,
+                random_state=random_state
+            )
+            .tolist()
+        )
+
+    for name in ["rna", "cnv", "snv"]:
+        data[name] = data[name][selected]
+
+    data["gene_names"] = selected
 
     return data
 
