@@ -80,77 +80,53 @@ def return_dataset(cohort: str):
     data = remove_duplicate_patients(data)
     data = align_patients(data)
     data = align_genes(data)
+    data = remove_low_variance_genes(data)
 
     if cohort == "full":
         return data
 
     elif cohort == "debug":
-        return reduce_genes(data, n_genes=1000)
+        return reduce_genes(data, n_genes=600)
 
     else:
         raise ValueError(
             f"Unknown cohort: {cohort}"
         )
 
-def reduce_genes(data, n_genes, random_state = 42):
+def reduce_genes(data, n_genes, random_state=42):
 
-    rna = data["rna"]
-
-    variance = rna.var(axis=0)
-
-    # Divide genes into 10 variance bins
-    bins = pd.qcut(
-        variance,
-        q=10,
-        labels=False,
-        duplicates="drop"
+    genes = (
+        pd.Series(data["rna"].columns)
+        .sample(
+            n=n_genes,
+            random_state=random_state,
+            replace=False
+        )
+        .tolist()
     )
 
-    selected = []
+    for name in ["rna", "cnv", "snv"]:
+        data[name] = data[name][genes]
 
-    genes_per_bin = n_genes // 10
+    data["gene_names"] = genes
 
-    for b in sorted(bins.unique()):
+    return data
 
-        genes_in_bin = variance[
-            bins == b
-        ].index
+def remove_low_variance_genes(data, min_variance=1e-8):
 
-        sampled = (
-            genes_in_bin
-            .to_series()
-            .sample(
-                n=genes_per_bin,
-                random_state=random_state
-            )
-            .tolist()
-        )
+    variance = data["rna"].var(axis=0)
 
-        selected.extend(sampled)
+    keep = variance[variance > min_variance].index
 
-    # If n_genes is not divisible by 10
-    remainder = n_genes - len(selected)
-
-    if remainder > 0:
-
-        remaining_genes = (
-            variance.index
-            .difference(selected)
-        )
-
-        selected.extend(
-            remaining_genes.to_series()
-            .sample(
-                n=remainder,
-                random_state=random_state
-            )
-            .tolist()
-        )
+    print(
+        f"Keeping {len(keep)} of {len(variance)} genes "
+        f"(removed {(variance <= min_variance).sum()} low-variance genes)"
+    )
 
     for name in ["rna", "cnv", "snv"]:
-        data[name] = data[name][selected]
+        data[name] = data[name][keep]
 
-    data["gene_names"] = selected
+    data["gene_names"] = keep.tolist()
 
     return data
 

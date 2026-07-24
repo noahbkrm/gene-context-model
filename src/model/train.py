@@ -89,12 +89,7 @@ def vicreg_loss(
         torch.diag(cov)
     )
 
-    covariance_loss = (
-        off_diag.pow(2)
-        .sum()
-        /
-        z.size(1)
-    )
+    covariance_loss = off_diag.pow(2).mean()
 
     return variance_loss, covariance_loss
 
@@ -154,7 +149,7 @@ def training(
 
             ce = -(teacher_probs * student_log_probs).sum(dim=-1)
 
-            jepa_loss = ce[student_mask].mean()
+            dino_loss = ce[student_mask].mean()
 
             # Select only masked genes
             z_masked = z_student[student_mask]
@@ -162,12 +157,12 @@ def training(
             var_loss, cov_loss = vicreg_loss(z_masked)
 
             if batch_idx == 0:
-                print("DINO:", jepa_loss.item())
+                print("DINO:", dino_loss.item())
                 print("Var :", var_loss.item())
                 print("Cov :", cov_loss.item())
 
             loss = (
-                jepa_loss
+                dino_loss
                 +
                 VICREG_VAR_WEIGHT * var_loss
                 +
