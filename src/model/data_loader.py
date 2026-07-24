@@ -85,7 +85,7 @@ def return_dataset(cohort: str):
         return data
 
     elif cohort == "debug":
-        return reduce_genes(data, n_genes=500)
+        return reduce_genes(data, n_genes=1000)
 
     else:
         raise ValueError(

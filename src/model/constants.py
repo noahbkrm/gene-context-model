@@ -7,7 +7,6 @@ __all__ = [
     "MASK_RATIO",
     "T_TEACHER",
     "T_STUDENT",
-    "VICREG_WEIGHT",
     "VICREG_VAR_WEIGHT", 
     "VICREG_COV_WEIGHT",
     "VICREG_GAMMA"
