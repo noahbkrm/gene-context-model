@@ -58,6 +58,46 @@ def update_teacher_model(
                 (1 - ema_param) * student_param.data
             )
 
+def vicreg_loss(
+        z,
+        gamma=VICREG_GAMMA,
+        eps=1e-4
+    ):
+
+    # Center
+    z = z - z.mean(dim=0)
+
+    # Variance loss
+
+    std = torch.sqrt(
+        z.var(dim=0) + eps
+    )
+
+    variance_loss = torch.mean(
+        F.relu(gamma - std)
+    )
+
+    # Covariance loss
+
+    n = z.size(0)
+
+    cov = (
+        z.T @ z
+    ) / (n - 1)
+
+    off_diag = cov - torch.diag(
+        torch.diag(cov)
+    )
+
+    covariance_loss = (
+        off_diag.pow(2)
+        .sum()
+        /
+        z.size(1)
+    )
+
+    return variance_loss, covariance_loss
+
 def training(
         teacher_model: GeneModel,
         student_model: GeneModel,
@@ -113,7 +153,21 @@ def training(
             student_log_probs = torch.log_softmax(z_student/T_STUDENT, dim=-1)
 
             ce = -(teacher_probs * student_log_probs).sum(dim=-1)
-            loss = ce[student_mask].mean()
+
+            jepa_loss = ce[student_mask].mean()
+
+            # Select only masked genes
+            z_masked = z_student[student_mask]
+
+            var_loss, cov_loss = vicreg_loss(z_masked)
+
+            loss = (
+                jepa_loss
+                +
+                VICREG_VAR_WEIGHT * var_loss
+                +
+                VICREG_COV_WEIGHT * cov_loss
+            )
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
