@@ -268,9 +268,12 @@ if __name__ == "__main__":
 
     torch.save(embeddings,"gene_embeddings.pt")
 
+    gene_embeddings = embeddings.mean(dim=0)
+
     embedding_df = pd.DataFrame(
-        embeddings.numpy(),
+        gene_embeddings.numpy(),
+        index=train_cohort["gene_names"]
     )
 
-    embedding_df.index.name = "gene_id"
+    embedding_df.index.name = "gene"
     embedding_df.to_csv("gene_embeddings.csv")
