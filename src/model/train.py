@@ -144,10 +144,18 @@ def prepare_dataset(cohort: pd.DataFrame, rna_stats: RnaStats):
     dataset = TCGA_Dataset(cohort, rna_stats=rna_stats)
     return dataset
 
-def generate_embeddings(model, loader, device):
+def generate_embeddings(
+        model,
+        tokenizer,
+        loader,
+        device
+    ):
 
     model.eval()
-    embeddings = []
+    tokenizer.eval()
+
+    gene_embedding_sum = None
+    n_patients = 0
 
     with torch.no_grad():
 
@@ -155,7 +163,7 @@ def generate_embeddings(model, loader, device):
 
             batch_gpu = {}
 
-            for k,v in batch.items():
+            for k, v in batch.items():
 
                 if torch.is_tensor(v):
                     batch_gpu[k] = v.to(device)
@@ -163,15 +171,22 @@ def generate_embeddings(model, loader, device):
                 else:
                     batch_gpu[k] = v
 
-                tokens = student_tokenizer(batch_gpu)
+            tokens = tokenizer(batch_gpu)
 
-                out = model(tokens)
+            out = model(tokens)
 
-                embeddings.append(
-                    out["embedding"].cpu()
-                )
+            patient_embeddings = out["embedding"].cpu()
+            # shape: (batch, genes, hidden_dim)
 
-    return torch.cat(embeddings, dim=0), model.gene_names
+            if gene_embedding_sum is None:
+                gene_embedding_sum = patient_embeddings.sum(dim=0)
+
+            else:
+                gene_embedding_sum += patient_embeddings.sum(dim=0)
+
+            n_patients += patient_embeddings.size(0)
+
+    return gene_embedding_sum / n_patients
 
 if __name__ == "__main__":
     train_cohort = return_dataset("debug")
@@ -225,8 +240,9 @@ if __name__ == "__main__":
         shuffle=False
     )
 
-    embeddings, gene_ids = generate_embeddings(
+    embeddings = generate_embeddings(
         student_model,
+        student_tokenizer,
         embedding_loader,
         device
     )
@@ -268,12 +284,13 @@ if __name__ == "__main__":
 
     torch.save(embeddings,"gene_embeddings.pt")
 
-    gene_embeddings = embeddings.mean(dim=0)
-
     embedding_df = pd.DataFrame(
-        gene_embeddings.numpy(),
+        embeddings.numpy(),
         index=train_cohort["gene_names"]
     )
 
     embedding_df.index.name = "gene"
-    embedding_df.to_csv("gene_embeddings.csv")
+
+    embedding_df.to_csv(
+        "gene_embeddings.csv"
+    )
