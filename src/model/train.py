@@ -323,7 +323,7 @@ if __name__ == "__main__":
             "optimizer": optimizer.state_dict(),
             "epoch": epoch,
         },
-        "jepa_checkpoint.pt",
+        "dino_checkpoint.pt",
     )
 
     student_model.eval() # Switch student model into eval mode

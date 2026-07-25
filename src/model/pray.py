@@ -99,7 +99,7 @@ def get_neighbors(
 # --------------------
 # Test known genes
 # --------------------
-
+'''
 query = [
     "KRT5",
     "KRT14",
@@ -116,6 +116,7 @@ for gene in query:
     print("\n================")
     print("QUERY:", gene)
     print(get_neighbors(gene))
+'''
 
 X = torch.tensor(
     emb.values,
