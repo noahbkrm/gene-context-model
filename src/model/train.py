@@ -13,6 +13,14 @@ import copy
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import os
+
+SAVE_DIR = "/content/drive/MyDrive/gcm/saves"
+
+os.makedirs(
+    SAVE_DIR,
+    exist_ok=True
+)
 
 def initialize_models(
         n_genes: int,
@@ -323,7 +331,10 @@ if __name__ == "__main__":
             "optimizer": optimizer.state_dict(),
             "epoch": epoch,
         },
-        "dino_checkpoint.pt",
+        os.path.join(
+            SAVE_DIR,
+            "dino_checkpoint.pt"
+        ),
     )
 
     student_model.eval() # Switch student model into eval mode
@@ -388,5 +399,8 @@ if __name__ == "__main__":
     embedding_df.index.name = "gene"
 
     embedding_df.to_csv(
-        "gene_embeddings.csv"
+        os.path.join(
+            SAVE_DIR,
+            "gene_embeddings.csv"
+        )
     )
