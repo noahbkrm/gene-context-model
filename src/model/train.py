@@ -132,10 +132,9 @@ def training(
     total_loss = 0
 
     progress = tqdm(loader, desc="Training", leave=False)
+    optimizer.zero_grad()
 
     for batch_idx, batch in enumerate(progress):
-
-        optimizer.zero_grad()
 
         batch_gpu = {}
 
@@ -206,17 +205,34 @@ def training(
                 +
                 VICREG_COV_WEIGHT * cov_loss
             )
+            loss = loss / ACCUMULATION_STEPS
 
         scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
-        teacher_center.update(
-            z_teacher.detach()
-        )
 
-        update_teacher_model(teacher_model, student_model, ema_param)
-        update_teacher_model(teacher_tokenizer, student_tokenizer, ema_param)
-        total_loss += loss.item()
+        if (batch_idx + 1) % ACCUMULATION_STEPS == 0:
+
+            scaler.step(optimizer)
+            scaler.update()
+
+            optimizer.zero_grad()
+
+            teacher_center.update(
+                z_teacher.detach()
+            )
+
+            update_teacher_model(
+                teacher_model,
+                student_model,
+                ema_param
+            )
+
+            update_teacher_model(
+                teacher_tokenizer,
+                student_tokenizer,
+                ema_param
+            )
+
+        total_loss += loss.item() * ACCUMULATION_STEPS
     
     avg_loss = total_loss / len(loader)
 
