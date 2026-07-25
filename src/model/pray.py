@@ -96,28 +96,6 @@ def get_neighbors(
     return neighbors.head(n_neighbors)
 
 
-# --------------------
-# Test known genes
-# --------------------
-'''
-query = [
-    "KRT5",
-    "KRT14",
-    "KRT17",
-    "KRT6A",
-    "KRT19",
-    "SFTPC",
-    "MUC1",
-    "EPCAM"
-]
-
-
-for gene in query:
-    print("\n================")
-    print("QUERY:", gene)
-    print(get_neighbors(gene))
-'''
-
 X = torch.tensor(
     emb.values,
     dtype=torch.float32
