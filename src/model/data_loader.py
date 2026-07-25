@@ -16,9 +16,11 @@ def load_processed_data():
 def validate_data(data):
     for name, df in data.items():
         print(name)
-        print("shape:", df.shape)
-        print("unique patients:", df.index.nunique())
-        print("duplicate patients:", df.index[df.index.duplicated()].tolist()[:10])
+        if isinstance(df, pd.DataFrame):
+            print("shape:", df.shape)
+            print("unique patients:", df.index.nunique())
+        else:
+            print(type(df))
         print()
 
     clinical = data["clinical"]
@@ -34,6 +36,10 @@ def validate_data(data):
 def remove_duplicate_patients(data):
 
     for name, df in data.items():
+
+        if not isinstance(df, pd.DataFrame):
+            continue
+
         mask = ~df.index.duplicated(keep="first")
         data[name] = df.loc[mask]
 
