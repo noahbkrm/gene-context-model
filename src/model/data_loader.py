@@ -32,18 +32,12 @@ def validate_data(data):
 
 
 def remove_duplicate_patients(data):
-    cleaned = {}
 
     for name, df in data.items():
-        before = len(df)
+        mask = ~df.index.duplicated(keep="first")
+        data[name] = df.loc[mask]
 
-        df = df[~df.index.duplicated(keep="first")]
-
-        after = len(df)
-
-        cleaned[name] = df
-
-    return cleaned
+    return data
 
 def align_patients(data):
     patients = (
@@ -76,27 +70,30 @@ def align_genes(data):
     return data
 
 def return_dataset(cohort: str):
-    print ("started return")
+
+    print("started return")
+
     data = load_processed_data()
+
     print("data loaded")
+
+    if cohort == "debug":
+        data = reduce_genes(data, n_genes=700)
+        print("reduced genes")
+
     data = remove_duplicate_patients(data)
-    print ("dedup")
+    print("dedup")
+
     data = align_patients(data)
     data = align_genes(data)
+
     print("aligned")
+
     data = remove_low_variance_genes(data)
+
     print("low")
 
-    if cohort == "full":
-        return data
-
-    elif cohort == "debug":
-        return reduce_genes(data, n_genes=700)
-
-    else:
-        raise ValueError(
-            f"Unknown cohort: {cohort}"
-        )
+    return data
 
 def reduce_genes(data, n_genes, random_state=42):
 
