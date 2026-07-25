@@ -15,6 +15,8 @@ import torch.nn.functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import os
 
+print("TRAIN.PY STARTED")
+
 SAVE_DIR = "/content/drive/MyDrive/gcm/saves"
 
 os.makedirs(
