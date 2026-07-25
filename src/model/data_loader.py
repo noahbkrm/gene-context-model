@@ -63,6 +63,7 @@ def remove_duplicate_patients(data):
     return data
 
 def align_patients(data):
+
     patients = (
         data["clinical"].index
         .intersection(data["cnv"].index)
@@ -70,7 +71,7 @@ def align_patients(data):
         .intersection(data["rna"].index)
     )
 
-    for name in data:
+    for name in ["clinical", "cnv", "snv", "rna"]:
         data[name] = data[name].loc[patients]
 
     return data
