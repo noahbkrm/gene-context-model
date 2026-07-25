@@ -198,6 +198,31 @@ def training(
                 print("Var :", var_loss.item())
                 print("Cov :", cov_loss.item())
 
+            ###################### TESTING
+            if (
+                torch.isnan(dino_loss)
+                or torch.isnan(var_loss)
+                or torch.isnan(cov_loss)
+            ):
+                print("NAN DETECTED")
+                print("batch:", batch_idx)
+                print("masked tokens:", h_masked.shape)
+                print("dino:", dino_loss)
+                print("var:", var_loss)
+                print("cov:", cov_loss)
+                print(
+                    "student logits:",
+                    z_student.min().item(),
+                    z_student.max().item()
+                )
+                print(
+                    "teacher logits:",
+                    z_teacher.min().item(),
+                    z_teacher.max().item()
+                )
+                continue
+            #############################
+
             loss = (
                 dino_loss
                 +
@@ -216,21 +241,21 @@ def training(
 
             optimizer.zero_grad()
 
-            teacher_center.update(
-                z_teacher.detach()
-            )
+        teacher_center.update(
+            z_teacher.detach()
+        )
 
-            update_teacher_model(
-                teacher_model,
-                student_model,
-                ema_param
-            )
+        update_teacher_model(
+            teacher_model,
+            student_model,
+            ema_param
+        )
 
-            update_teacher_model(
-                teacher_tokenizer,
-                student_tokenizer,
-                ema_param
-            )
+        update_teacher_model(
+            teacher_tokenizer,
+            student_tokenizer,
+            ema_param
+        )
 
         total_loss += loss.item() * ACCUMULATION_STEPS
     
