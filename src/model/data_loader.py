@@ -76,12 +76,16 @@ def align_genes(data):
     return data
 
 def return_dataset(cohort: str):
-
+    print ("started return")
     data = load_processed_data()
+    print("data loaded")
     data = remove_duplicate_patients(data)
+    print ("dedup")
     data = align_patients(data)
     data = align_genes(data)
+    print("aligned")
     data = remove_low_variance_genes(data)
+    print("low")
 
     if cohort == "full":
         return data
