@@ -3,6 +3,7 @@ import torch.nn as nn
 import pandas as pd
 from tqdm import tqdm
 from constants import *
+from projection import TeacherCenter
 from gene_model import GeneModel, GeneTokenizer
 from rna_encoder import RnaStats, RnaEmbedding
 from dataclass import TCGA_Dataset, get_loader
@@ -28,7 +29,9 @@ def initialize_models(
     masker = GeneMask(hidden_dim).to(device)
     
     student_model = GeneModel(hidden_dim).to(device)
-    teacher_model = copy.deepcopy(student_model).to(device) # Set teacher to match student
+    teacher_model = GeneModel(hidden_dim).to(device)
+
+    teacher_model.load_state_dict(student_model.state_dict())
     
     for param in teacher_model.parameters():
         param.requires_grad = False
@@ -40,7 +43,13 @@ def initialize_models(
         weight_decay=1e-2,
     )
 
-    return teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker
+    projection_dim = HIDDEN_DIM // 3
+
+    teacher_center = TeacherCenter(
+        projection_dim
+    ).to(device)
+
+    return teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker, teacher_center
 
 def update_teacher_model(
     teacher_model: nn.Module,
@@ -102,6 +111,7 @@ def training(
         optimizer,
         scaler,
         masker,
+        teacher_center,
         ema_param: float = EMA_PARAM,
     ):
 
@@ -144,17 +154,35 @@ def training(
             z_student = student["projection"]
 
             # Apply softmax and temp, then calculate cross-entropy loss
-            teacher_probs = torch.softmax(z_teacher/T_TEACHER, dim=-1)
+            teacher_logits = (
+                z_teacher - teacher_center.center
+            ) / T_TEACHER
+
+            teacher_probs = torch.softmax(
+                teacher_logits,
+                dim=-1
+            )
+
             student_log_probs = torch.log_softmax(z_student/T_STUDENT, dim=-1)
 
             ce = -(teacher_probs * student_log_probs).sum(dim=-1)
 
             dino_loss = ce[student_mask].mean()
 
-            # Select only masked genes
-            z_masked = z_student[student_mask]
+            # Select only randomly sampled masked genes
+            h_student = student["embedding"]
 
-            var_loss, cov_loss = vicreg_loss(z_masked)
+            h_masked = h_student[student_mask]
+
+            if h_masked.size(0) > 4096:
+                idx = torch.randperm(
+                    h_masked.size(0),
+                    device=h_masked.device
+                )[:4096]
+
+                h_masked = h_masked[idx]
+
+            var_loss, cov_loss = vicreg_loss(h_masked)
 
             if batch_idx == 0:
                 print("DINO:", dino_loss.item())
@@ -172,6 +200,9 @@ def training(
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
+        teacher_center.update(
+            z_teacher.detach()
+        )
 
         update_teacher_model(teacher_model, student_model, ema_param)
         update_teacher_model(teacher_tokenizer, student_tokenizer, ema_param)
@@ -191,7 +222,7 @@ def training(
 
     print(f"Cosine similarity: {cos.item():.4f}")
 
-    dim_std = z_masked.std(dim=0)
+    dim_std = h_masked.std(dim=0)
 
     print("Mean dim std:", dim_std.mean())
     print("Min dim std :", dim_std.min())
@@ -261,7 +292,7 @@ if __name__ == "__main__":
 
     loader = get_loader(train_dataset)
 
-    teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker = initialize_models(
+    teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker, teacher_center = initialize_models(
         n_genes=rna_stats.n_genes,
         hidden_dim = HIDDEN_DIM
     )
@@ -279,7 +310,8 @@ if __name__ == "__main__":
             loader,
             optimizer,
             scaler,
-            masker
+            masker,
+            teacher_center
         ) 
         print(f"Epoch Loss: {loss:.4f}") 
     

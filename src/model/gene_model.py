@@ -49,7 +49,17 @@ class GeneModel(nn.Module):
 
         transformed_emb = self.transformer(gene_tokens)
 
+        print(
+            "Backbone std:",
+            transformed_emb.std().item()
+        )
+
         proj_emb = self.projection(transformed_emb)
+
+        print(
+            "Projection std:",
+            proj_emb.std().item()
+        )
 
         return {
             "projection": proj_emb,

@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+import numpy as np
 
 DATA_DIR = Path("../../data/processed")
 
@@ -114,9 +115,12 @@ def reduce_genes(data, n_genes, random_state=42):
 
 def remove_low_variance_genes(data, min_variance=1e-8):
 
-    variance = data["rna"].var(axis=0)
+    variance = np.nanvar(
+        data["rna"].to_numpy(dtype=np.float32),
+        axis=0
+    )
 
-    keep = variance[variance > min_variance].index
+    keep = data["rna"].columns[variance > min_variance]
 
     print(
         f"Keeping {len(keep)} of {len(variance)} genes "
