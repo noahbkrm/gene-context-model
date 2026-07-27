@@ -83,11 +83,13 @@ def vicreg_loss(
         eps=1e-4
     ):
 
+    # Force FP32 for VICReg statistics
+    z = z.float()
+
     # Center
     z = z - z.mean(dim=0)
 
     # Variance loss
-
     std = torch.sqrt(
         z.var(dim=0) + eps
     )
@@ -97,7 +99,6 @@ def vicreg_loss(
     )
 
     # Covariance loss
-
     n = z.size(0)
 
     cov = (
