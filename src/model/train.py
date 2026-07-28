@@ -9,6 +9,7 @@ from rna_encoder import RnaStats, RnaEmbedding
 from dataclass import TCGA_Dataset, get_loader
 from data_loader import return_dataset
 from mask import GeneMask
+from sparse_attention import SparseAttention
 import copy
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
@@ -41,6 +42,10 @@ def initialize_models(
     
     student_model = GeneModel(n_genes, hidden_dim, method).to(device)
     teacher_model = GeneModel(n_genes, hidden_dim, method).to(device)
+
+    for module in student_model.modules():
+        if isinstance(module, SparseAttention):
+            module.reset_neighbors()
 
     teacher_model.load_state_dict(student_model.state_dict())
     

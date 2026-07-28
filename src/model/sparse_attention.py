@@ -46,12 +46,20 @@ class SparseAttention(nn.Module):
         self.layernorm = nn.LayerNorm(hidden_dim)
         self.dropout = dropout
         self.n_genes = n_genes
+        self.register_buffer(
+            "neighbor_index",
+            create_attention_matrix(n_genes, K_NEIGHBOR)
+        )
 
     def reset_neighbors(self):
-        self.neighbor_index = create_attention_matrix(
+        new_neighbors = create_attention_matrix(
             self.n_genes,
             K_NEIGHBOR
-        ).to(self.neighbor_index.device)
+        )
+
+        self.neighbor_index.copy_(
+            new_neighbors.to(self.neighbor_index.device)
+        )
     
     def forward(self, input_tokens): # input token embedding dims: (batch, n_tokens, hidden_dim)
         N = input_tokens.size(1)
