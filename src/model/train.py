@@ -159,14 +159,24 @@ def training(
             student_tokens, student_mask = masker(student_raw_tokens)
             teacher_tokens = teacher_tokenizer(batch_gpu)
 
-            print(student_tokens.shape, flush=True)
-            print(student_tokens.dtype, flush=True)
-            print(student_tokens.device, flush=True)
+            print("BEFORE STUDENT MODEL", flush=True)
+
             print(
-                student_tokens.numel() * student_tokens.element_size() / 1024**2,
-                "MB",
-                flush=True,
+                student_tokens.shape,
+                student_tokens.dtype,
+                student_tokens.device,
+                flush=True
             )
+
+            torch.cuda.synchronize()
+
+            print(
+                "GPU before student:",
+                torch.cuda.memory_allocated()/1024**3,
+                "GB",
+                flush=True
+            )
+            
             with torch.no_grad():
                 teacher = teacher_model(teacher_tokens) # Calculate teacher
 

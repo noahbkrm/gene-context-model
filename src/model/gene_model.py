@@ -57,18 +57,6 @@ class GeneModel(nn.Module):
             self.transformer = FullTransformerEncoder()
 
     def forward(self, gene_tokens): # image_binary: True is student, False is teacher
-        print("ENTERED GENE MODEL", flush=True)
-        print("ENTERED GENE MODEL", flush=True)
-
-        print(
-            "input:",
-            gene_tokens.shape,
-            gene_tokens.dtype,
-            gene_tokens.device,
-            flush=True
-        )
-
-        torch.cuda.synchronize()
         transformed_emb = self.transformer(gene_tokens)
 
         """ print(
