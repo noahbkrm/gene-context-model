@@ -160,12 +160,7 @@ def training(
             teacher_tokens = teacher_tokenizer(batch_gpu)
 
             with torch.no_grad():
-                print("CALLING MODEL", flush=True)
-                try:
-                    teacher = teacher_model(teacher_tokens) # Calculate teacher
-                except Exception as e:
-                    print("FAILED CALL", type(e), e, flush=True)
-                    raise
+                teacher = teacher_model(teacher_tokens) # Calculate teacher
 
             student = student_model(student_tokens)
 
