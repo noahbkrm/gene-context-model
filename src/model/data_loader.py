@@ -146,8 +146,10 @@ def reduce_genes(data, n_genes, random_state=42):
 
 def remove_low_variance_genes(data, min_variance=1e-8):
 
+    data["rna"] = data["rna"].astype(np.float32)
+
     variance = np.nanvar(
-        data["rna"].to_numpy(dtype=np.float32),
+        data["rna"].values,
         axis=0
     )
 
