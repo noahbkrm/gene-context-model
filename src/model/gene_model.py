@@ -27,16 +27,10 @@ class GeneTokenizer(nn.Module):
             batch["rna_mask"],
         )
 
-        torch.cuda.synchronize()
-        print("RNA done", flush=True)
-
         snv_tokens = self.snv_encoder(
             batch["snv_states"],
             batch["snv_mask"],
         )
-
-        torch.cuda.synchronize()
-        print("SNV done", flush=True)
 
         cnv_tokens = self.cnv_encoder(
             batch["cnv_states"],
