@@ -93,7 +93,7 @@ def return_dataset(cohort: str):
     print("data loaded")
 
     if cohort == "debug":
-        data = reduce_genes(data, n_genes=1000)
+        data = reduce_genes(data, n_genes=1500)
         print("reduced genes")
 
     data = remove_duplicate_patients(data)
