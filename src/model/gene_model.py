@@ -50,6 +50,7 @@ class GeneModel(nn.Module):
             self.transformer = FullTransformerEncoder()
 
     def forward(self, gene_tokens): # image_binary: True is student, False is teacher
+        print("ENTERED GENE MODEL", flush=True)
         gpu_mem("Starting forward pass")
         transformed_emb = self.transformer(gene_tokens)
 

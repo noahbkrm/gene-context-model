@@ -347,14 +347,12 @@ if __name__ == "__main__":
     print("Dataset prepared")
     loader = get_loader(train_dataset)
 
-    gpu_mem("Start")
     teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker, teacher_center = initialize_models(
         n_genes=rna_stats.n_genes,
         hidden_dim = HIDDEN_DIM,
         method = "Sparse"
     )
 
-    gpu_mem("Models Initialized")
     scaler = torch.amp.GradScaler("cuda")
 
     for epoch in range(NUM_EPOCHS):
