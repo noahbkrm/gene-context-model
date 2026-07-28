@@ -337,7 +337,7 @@ def generate_embeddings(
     return gene_embedding_sum / n_patients
 
 if __name__ == "__main__":
-    train_cohort = return_dataset("debug")
+    train_cohort = return_dataset("full")
     
     rna_stats = RnaEmbedding.fit(train_cohort["rna"])
     
