@@ -45,6 +45,12 @@ class RnaEmbedding(nn.Module):
 
         expression_tensor = torch.tensor(df.values, dtype=torch.float32)
 
+        print(expression_tensor.shape)
+        print(expression_tensor.dtype)
+        print(expression_tensor.device)
+        print(expression_tensor.is_contiguous())
+        print(expression_tensor.numel())
+
         mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32).copy())
 
         return expression_tensor, mask_tensor
