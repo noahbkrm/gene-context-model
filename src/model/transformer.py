@@ -124,9 +124,9 @@ class SparseTransformerEncoder(nn.Module):
         super().__init__()
         self.blocks = nn.ModuleList([
             SparseTransformerBlock(n_genes),
-            #SparseTransformerBlock(n_genes),
-            #SparseTransformerBlock(n_genes),
-            #SparseTransformerBlock(n_genes),
+            SparseTransformerBlock(n_genes),
+            SparseTransformerBlock(n_genes),
+            SparseTransformerBlock(n_genes),
         ])
     def forward(self, x):
 
