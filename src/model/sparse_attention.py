@@ -28,15 +28,6 @@ def create_attention_matrix(n_genes: int, k: int):
         ])
     return neighbor_index # Returns shape (n_genes, k)
 
-def prepare_neighbor_index(neighbor_index, x, N):
-    B = x.size(0)
-    k = neighbor_index.size(-1)
-
-    neighbor_index = neighbor_index.unsqueeze(0).expand(B, -1, -1)
-    batch_index = torch.arange(B, device=x.device).view(B, 1, 1).expand(-1, N, k)
-
-    return x[batch_index, neighbor_index]
-
 class SparseAttention(nn.Module):
     def __init__(self, dropout, n_genes, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
@@ -61,36 +52,55 @@ class SparseAttention(nn.Module):
             new_neighbors.to(self.neighbor_index.device)
         )
     
-    def forward(self, input_tokens): # input token embedding dims: (batch, n_tokens, hidden_dim)
-        N = input_tokens.size(1)
+    def forward(self, input_tokens):
+        """
+        input_tokens:
+            (B, N, H)
+        """
 
-        graph = prepare_neighbor_index(
-            self.neighbor_index,
-            input_tokens,
-            N
-        )
+        B, N, H = input_tokens.shape
 
-        Q = self.Wq(input_tokens) # Q: q*Wq    dims: (batch, n_genes, hidden_dim)
-        Keys = self.Wk(graph) # K: x*Wk    dims: (batch, n_genes, k_neighbors, hidden_dim)
-        V = self.Wv(graph) # V: x*Wv    dims: (batch, n_genes, k_neighbors, hidden_dim)
-        
-        sim_matrix = (
-            Q.unsqueeze(2) * Keys
-        ).sum(-1)
+        # Project everything once
+        Q = self.Wq(input_tokens)      # (B, N, H)
+        K_all = self.Wk(input_tokens)  # (B, N, H)
+        V_all = self.Wv(input_tokens)  # (B, N, H)
 
-        d = Q.size(-1)
-        sim_matrix = sim_matrix / math.sqrt(d)
+        output = torch.empty_like(input_tokens)
 
-        alpha = torch.softmax(sim_matrix, -1) 
-        alpha = F.dropout(
-            alpha,
-            p=self.dropout,
-            training=self.training
-        )
+        scale = math.sqrt(H)
 
-        output = (
-            alpha.unsqueeze(-1) * V
-        ).sum(dim=2)
+        for gene in range(N):
+
+            nbrs = self.neighbor_index[gene]      # (K,)
+
+            # Gather projected neighbors
+            K = K_all[:, nbrs]                    # (B, K, H)
+            V = V_all[:, nbrs]                    # (B, K, H)
+
+            # Query for this gene
+            q = Q[:, gene]                        # (B, H)
+
+            scores = (
+                q.unsqueeze(1) * K
+            ).sum(dim=-1)
+
+            scores = scores / scale
+
+            alpha = torch.softmax(
+                scores,
+                dim=-1
+            )
+
+            alpha = F.dropout(
+                alpha,
+                p=self.dropout,
+                training=self.training,
+            )
+
+            attended = (
+                alpha.unsqueeze(-1) * V
+            ).sum(dim=1)
+
+            output[:, gene] = attended
 
         return self.layernorm(output)
-        
