@@ -8,16 +8,12 @@ DATA_DIR = Path("../../data/processed")
 def load_processed_data():
 
     clinical = pd.read_parquet(DATA_DIR / "clinical.parquet")
-    print("clinical done")
 
     cnv = pd.read_parquet(DATA_DIR / "cnv.parquet")
-    print("cnv done")
 
     snv = pd.read_parquet(DATA_DIR / "snv.parquet")
-    print("snv done")
 
     rna = pd.read_parquet(DATA_DIR / "rna.parquet")
-    print("rna done")
 
     return {
         "clinical": clinical,

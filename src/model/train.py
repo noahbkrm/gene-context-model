@@ -158,6 +158,15 @@ def training(
             student_raw_tokens = student_tokenizer(batch_gpu)
             student_tokens, student_mask = masker(student_raw_tokens)
             teacher_tokens = teacher_tokenizer(batch_gpu)
+
+            print(student_tokens.shape, flush=True)
+            print(student_tokens.dtype, flush=True)
+            print(student_tokens.device, flush=True)
+            print(
+                student_tokens.numel() * student_tokens.element_size() / 1024**2,
+                "MB",
+                flush=True,
+            )
             with torch.no_grad():
                 teacher = teacher_model(teacher_tokens) # Calculate teacher
 
