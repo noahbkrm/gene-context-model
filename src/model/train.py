@@ -9,6 +9,7 @@ from rna_encoder import RnaStats, RnaEmbedding
 from dataclass import TCGA_Dataset, get_loader
 from data_loader import return_dataset
 from mask import GeneMask
+from utils import gpu_mem
 from sparse_attention import SparseAttention
 import copy
 from torch.utils.data import DataLoader
@@ -154,17 +155,19 @@ def training(
                 batch_gpu[k] = v
         
         with torch.amp.autocast("cuda"):
-
+            gpu_mem("pre raw tokens")
             student_raw_tokens = student_tokenizer(batch_gpu)
-
+            gpu_mem("student tokenizer ran")
             student_tokens, student_mask = masker(student_raw_tokens)
-
+            gpu_mem("masker ran")
             teacher_tokens = teacher_tokenizer(batch_gpu)
-
+            gpu_mem("teacher tokenizer ran")
             with torch.no_grad():
                 teacher = teacher_model(teacher_tokens) # Calculate teacher
+                gpu_mem("teacher model ran")
 
             student = student_model(student_tokens)
+            gpu_mem("student model ran")
 
             z_teacher = teacher["projection"]
             z_student = student["projection"]
@@ -350,12 +353,14 @@ if __name__ == "__main__":
     print("Dataset prepared")
     loader = get_loader(train_dataset)
 
+    gpu_mem("Start")
     teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker, teacher_center = initialize_models(
         n_genes=rna_stats.n_genes,
         hidden_dim = HIDDEN_DIM,
         method = "Sparse"
     )
 
+    gpu_mem("Models Initialized")
     scaler = torch.amp.GradScaler("cuda")
 
     for epoch in range(NUM_EPOCHS):
