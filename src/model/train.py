@@ -342,10 +342,10 @@ def generate_embeddings(
     return gene_embedding_sum / n_patients
 
 if __name__ == "__main__":
-    train_cohort = return_dataset("full")
+    train_cohort = return_dataset("debug")
     print("dataset ready")
     rna_stats = RnaEmbedding.fit(train_cohort["rna"])
-    print("RnaStats Done")
+    print("RnaStats Done") # This is the last passed checkpoint
     train_dataset = prepare_dataset(train_cohort, rna_stats)
     print("Dataset prepared")
     loader = get_loader(train_dataset)

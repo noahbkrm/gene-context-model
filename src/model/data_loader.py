@@ -101,7 +101,7 @@ def return_dataset(cohort: str):
     print("data loaded")
 
     if cohort == "debug":
-        data = reduce_genes(data, n_genes=1500)
+        data = reduce_genes(data, n_genes=2000)
         print("reduced genes")
 
     data = remove_duplicate_patients(data)
@@ -120,7 +120,7 @@ def return_dataset(cohort: str):
 
     return data
 
-def reduce_genes(data, n_genes, random_state=42):
+def reduce_genes(data, n_genes, random_state=21):
 
     genes = (
         pd.Series(data["rna"].columns)
