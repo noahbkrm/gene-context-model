@@ -159,26 +159,13 @@ def training(
             student_tokens, student_mask = masker(student_raw_tokens)
             teacher_tokens = teacher_tokenizer(batch_gpu)
 
-            print("BEFORE STUDENT MODEL", flush=True)
-
-            print(
-                student_tokens.shape,
-                student_tokens.dtype,
-                student_tokens.device,
-                flush=True
-            )
-
-            torch.cuda.synchronize()
-
-            print(
-                "GPU before student:",
-                torch.cuda.memory_allocated()/1024**3,
-                "GB",
-                flush=True
-            )
-            
             with torch.no_grad():
-                teacher = teacher_model(teacher_tokens) # Calculate teacher
+                print("CALLING MODEL", flush=True)
+                try:
+                    teacher = teacher_model(teacher_tokens) # Calculate teacher
+                except Exception as e:
+                    print("FAILED CALL", type(e), e, flush=True)
+                    raise
 
             student = student_model(student_tokens)
 
