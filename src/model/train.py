@@ -340,9 +340,9 @@ if __name__ == "__main__":
     train_cohort = return_dataset("full")
     print("dataset ready")
     rna_stats = RnaEmbedding.fit(train_cohort["rna"])
-    
+    print("RnaStats Done")
     train_dataset = prepare_dataset(train_cohort, rna_stats)
-
+    print("Dataset prepared")
     loader = get_loader(train_dataset)
 
     teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker, teacher_center = initialize_models(
