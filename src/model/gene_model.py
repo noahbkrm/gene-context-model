@@ -5,7 +5,7 @@ from cnv_encoder import CNVEmbedding
 from snv_encoder import SNVEmbedding
 from rna_encoder import RnaEmbedding
 from fusion import GeneTokenEmbedding
-from transformer import TransformerEncoder
+from transformer import FullTransformerEncoder, SparseTransformerEncoder
 from projection import Projection
 
 class GeneTokenizer(nn.Module):
@@ -40,10 +40,13 @@ class GeneTokenizer(nn.Module):
         return gene_tokens
 
 class GeneModel(nn.Module):
-    def __init__(self, hidden_dim: int = HIDDEN_DIM):
+    def __init__(self, n_genes, hidden_dim: int = HIDDEN_DIM, method: str = "Sparse"):
         super().__init__()
         self.projection = Projection(hidden_dim)
-        self.transformer = TransformerEncoder()
+        if method == "Sparse":
+            self.transformer = SparseTransformerEncoder(n_genes)
+        elif method == "Full":
+            self.transformer = FullTransformerEncoder()
 
     def forward(self, gene_tokens): # image_binary: True is student, False is teacher
 

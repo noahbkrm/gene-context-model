@@ -27,6 +27,7 @@ os.makedirs(
 def initialize_models(
         n_genes: int,
         hidden_dim: int = HIDDEN_DIM,
+        method: str = "Sparse"
     ):
 
     student_tokenizer = GeneTokenizer(
@@ -38,8 +39,8 @@ def initialize_models(
 
     masker = GeneMask(hidden_dim).to(device)
     
-    student_model = GeneModel(hidden_dim).to(device)
-    teacher_model = GeneModel(hidden_dim).to(device)
+    student_model = GeneModel(n_genes, hidden_dim, method).to(device)
+    teacher_model = GeneModel(n_genes, hidden_dim, method).to(device)
 
     teacher_model.load_state_dict(student_model.state_dict())
     
@@ -346,7 +347,8 @@ if __name__ == "__main__":
 
     teacher_model, student_model, teacher_tokenizer, student_tokenizer, optimizer, masker, teacher_center = initialize_models(
         n_genes=rna_stats.n_genes,
-        hidden_dim = HIDDEN_DIM
+        hidden_dim = HIDDEN_DIM,
+        method = "Sparse"
     )
 
     scaler = torch.amp.GradScaler("cuda")
