@@ -37,7 +37,7 @@ class GeneTokenizer(nn.Module):
 
         torch.cuda.synchronize()
         print("SNV done", flush=True)
-        
+
         cnv_tokens = self.cnv_encoder(
             batch["cnv_states"],
             batch["cnv_mask"],
@@ -58,7 +58,17 @@ class GeneModel(nn.Module):
 
     def forward(self, gene_tokens): # image_binary: True is student, False is teacher
         print("ENTERED GENE MODEL", flush=True)
-        gpu_mem("Starting forward pass")
+        print("ENTERED GENE MODEL", flush=True)
+
+        print(
+            "input:",
+            gene_tokens.shape,
+            gene_tokens.dtype,
+            gene_tokens.device,
+            flush=True
+        )
+
+        torch.cuda.synchronize()
         transformed_emb = self.transformer(gene_tokens)
 
         """ print(

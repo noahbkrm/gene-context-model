@@ -36,20 +36,13 @@ class RnaEmbedding(nn.Module):
 
     @staticmethod
     def prepare(df, stats):
-        print("prepare started")
         observed_mask = (~df.isna()).astype(float)
-        print("masked up")
-        df = df.fillna(stats.train_gene_mean)
-        print("filled NA")
-        df = (df - stats.train_gene_mean) / stats.train_gene_std
-        print("df")
-        expression_tensor = torch.tensor(df.values, dtype=torch.float32)
 
-        print(expression_tensor.shape)
-        print(expression_tensor.dtype)
-        print(expression_tensor.device)
-        print(expression_tensor.is_contiguous())
-        print(expression_tensor.numel())
+        df = df.fillna(stats.train_gene_mean)
+
+        df = (df - stats.train_gene_mean) / stats.train_gene_std
+
+        expression_tensor = torch.tensor(df.values, dtype=torch.float32)
 
         mask_tensor = torch.from_numpy(observed_mask.to_numpy(dtype=np.float32).copy())
 
