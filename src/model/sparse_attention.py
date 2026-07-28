@@ -53,10 +53,6 @@ class SparseAttention(nn.Module):
         )
     
     def forward(self, input_tokens):
-        """
-        input_tokens:
-            (B, N, H)
-        """
 
         B, N, H = input_tokens.shape
 
