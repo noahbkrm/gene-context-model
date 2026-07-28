@@ -7,6 +7,7 @@ from rna_encoder import RnaEmbedding
 from fusion import GeneTokenEmbedding
 from transformer import FullTransformerEncoder, SparseTransformerEncoder
 from projection import Projection
+from utils import gpu_mem
 
 class GeneTokenizer(nn.Module):
     def __init__(self, n_genes: int, hidden_dim: int = HIDDEN_DIM):
@@ -49,7 +50,7 @@ class GeneModel(nn.Module):
             self.transformer = FullTransformerEncoder()
 
     def forward(self, gene_tokens): # image_binary: True is student, False is teacher
-
+        gpu_mem("Starting forward pass")
         transformed_emb = self.transformer(gene_tokens)
 
         """ print(

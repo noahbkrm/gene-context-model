@@ -155,19 +155,13 @@ def training(
                 batch_gpu[k] = v
         
         with torch.amp.autocast("cuda"):
-            gpu_mem("pre raw tokens")
             student_raw_tokens = student_tokenizer(batch_gpu)
-            gpu_mem("student tokenizer ran")
             student_tokens, student_mask = masker(student_raw_tokens)
-            gpu_mem("masker ran")
             teacher_tokens = teacher_tokenizer(batch_gpu)
-            gpu_mem("teacher tokenizer ran")
             with torch.no_grad():
                 teacher = teacher_model(teacher_tokens) # Calculate teacher
-                gpu_mem("teacher model ran")
 
             student = student_model(student_tokens)
-            gpu_mem("student model ran")
 
             z_teacher = teacher["projection"]
             z_student = student["projection"]
