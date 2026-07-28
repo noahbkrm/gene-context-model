@@ -116,6 +116,13 @@ def return_dataset(cohort: str):
 
     print("low")
 
+    print("Memory usage:")
+
+    for name, df in data.items():
+        if isinstance(df, pd.DataFrame):
+            size_gb = df.memory_usage(deep=True).sum() / 1e9
+            print(name, df.shape, f"{size_gb:.2f} GB")
+
     return data
 
 def reduce_genes(data, n_genes, random_state=42):
