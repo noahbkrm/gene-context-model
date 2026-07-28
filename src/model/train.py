@@ -361,7 +361,7 @@ if __name__ == "__main__":
         hidden_dim = HIDDEN_DIM,
         method = "Sparse"
     )
-
+    print("models initialized")
     scaler = torch.amp.GradScaler("cuda")
 
     for epoch in range(NUM_EPOCHS):
