@@ -338,7 +338,7 @@ def generate_embeddings(
 
 if __name__ == "__main__":
     train_cohort = return_dataset("full")
-    
+    print("dataset ready")
     rna_stats = RnaEmbedding.fit(train_cohort["rna"])
     
     train_dataset = prepare_dataset(train_cohort, rna_stats)
