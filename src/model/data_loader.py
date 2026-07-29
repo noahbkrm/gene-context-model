@@ -108,8 +108,6 @@ def return_dataset(cohort: str):
 
     print("low")
 
-    print("Memory usage:")
-
     return data
 
 def reduce_genes(data, n_genes, random_state=21):

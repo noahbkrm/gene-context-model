@@ -340,6 +340,7 @@ def generate_embeddings(
     return gene_embedding_sum / n_patients
 
 if __name__ == "__main__":
+    torch.manual_seed(42)
     train_cohort = return_dataset("debug")
     print("dataset ready")
     rna_stats = RnaEmbedding.fit(train_cohort["rna"])
