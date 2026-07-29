@@ -359,6 +359,8 @@ if __name__ == "__main__":
 
     for epoch in range(NUM_EPOCHS):
         print(f"\nEpoch {epoch+1}/{NUM_EPOCHS}")
+        student_model.reset_sparse_neighbors()
+        teacher_model.load_sparse_neighbors_from(student_model)
 
         loss = training(
             teacher_model,

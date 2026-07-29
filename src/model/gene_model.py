@@ -50,6 +50,19 @@ class GeneModel(nn.Module):
         elif method == "Full":
             self.transformer = FullTransformerEncoder()
 
+    def reset_neighbors(self):
+        if hasattr(self.transformer, "reset_sparse_neighbors"):
+            self.transformer.reset_sparse_neighbors()
+
+    def load_sparse_neighbors_from(self, other):
+        for my_block, other_block in zip(
+            self.transformer.blocks,
+            other.transformer.blocks,
+        ):
+            my_block.sparse_attn.neighbor_index.copy_(
+                other_block.sparse_attn.neighbor_index
+            )
+
     def forward(self, gene_tokens): # image_binary: True is student, False is teacher
         transformed_emb = self.transformer(gene_tokens)
 

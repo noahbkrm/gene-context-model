@@ -128,6 +128,10 @@ class SparseTransformerEncoder(nn.Module):
             SparseTransformerBlock(n_genes),
             SparseTransformerBlock(n_genes),
         ])
+    def reset_sparse_neighbors(self):
+        for block in self.blocks:
+            block.sparse_attn.reset_neighbors()
+            
     def forward(self, x):
 
         for block in self.blocks:
