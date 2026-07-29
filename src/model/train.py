@@ -60,7 +60,7 @@ def initialize_models(
         weight_decay=1e-2,
     )
 
-    projection_dim = HIDDEN_DIM // 2
+    projection_dim = HIDDEN_DIM 
 
     teacher_center = TeacherCenter(
         projection_dim
