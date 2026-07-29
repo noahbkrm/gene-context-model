@@ -7,7 +7,7 @@ from constants import HIDDEN_DIM
 class Projection(nn.Module):
     def __init__(self, hidden_dim: int = HIDDEN_DIM):
         super().__init__()
-        out_dim = 256
+        out_dim = 128
         self.net = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim*4),
             nn.GELU(),
