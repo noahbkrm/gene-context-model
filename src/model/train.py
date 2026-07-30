@@ -357,6 +357,11 @@ if __name__ == "__main__":
     print("models initialized")
     scaler = torch.amp.GradScaler("cuda")
 
+    embedding_loader = get_loader(
+        train_dataset,
+        shuffle=False
+    )
+
     for epoch in range(NUM_EPOCHS):
         print(f"\nEpoch {epoch+1}/{NUM_EPOCHS}")
         student_model.reset_neighbors()
@@ -374,6 +379,38 @@ if __name__ == "__main__":
             teacher_center
         ) 
         print(f"Epoch Loss: {loss:.4f}") 
+
+        student_model.eval()
+        student_tokenizer.eval()
+
+        with torch.no_grad():
+            embeddings = generate_embeddings(
+                student_model,
+                student_tokenizer,
+                embedding_loader,
+                device,
+            )
+
+        torch.save(
+            embeddings,
+            os.path.join(
+                SAVE_DIR,
+                f"gene_embeddings_epoch_{epoch+1:02d}.pt"
+            )
+        )
+
+        pd.DataFrame(
+            embeddings.numpy(),
+            index=train_cohort["gene_names"]
+        ).to_csv(
+            os.path.join(
+                SAVE_DIR,
+                f"gene_embeddings_epoch_{epoch+1:02d}.csv"
+            )
+        )
+
+        student_model.train()
+        student_tokenizer.train()
     
     torch.save(
         {
@@ -393,11 +430,6 @@ if __name__ == "__main__":
 
     for p in student_model.parameters(): # Freeze the student model
         p.requires_grad = False
-            
-    embedding_loader = get_loader(
-        train_dataset,
-        shuffle=False
-    )
 
     embeddings = generate_embeddings(
         student_model,
@@ -440,21 +472,5 @@ if __name__ == "__main__":
     print("Std cosine:", cosines.std())
     print("Min cosine:", cosines.min())
     print("Max cosine:", cosines.max())
-
-    torch.save(embeddings,"gene_embeddings.pt")
-
-    embedding_df = pd.DataFrame(
-        embeddings.numpy(),
-        index=train_cohort["gene_names"]
-    )
-
-    embedding_df.index.name = "gene"
-
-    embedding_df.to_csv(
-        os.path.join(
-            SAVE_DIR,
-            "gene_embeddings.csv"
-        )
-    )
 
     print("TRAINING SUCCESFULLY COMPLETED")
