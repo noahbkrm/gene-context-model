@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import numpy as np
+from constants import CUSTOM_GENE_LIST
 
 DATA_DIR = Path("../../data/processed")
 
@@ -112,15 +113,36 @@ def return_dataset(cohort: str):
 
 def reduce_genes(data, n_genes, random_state=21):
 
-    genes = (
-        pd.Series(data["rna"].columns)
+    all_genes = pd.Index(data["rna"].columns)
+
+    # Keep only genes that actually exist in the dataset
+    custom_genes = [
+        g for g in CUSTOM_GENE_LIST
+        if g in all_genes
+    ]
+
+    # Remaining genes available for random sampling
+    remaining = all_genes.difference(custom_genes)
+
+    n_random = n_genes - len(custom_genes)
+
+    if n_random < 0:
+        raise ValueError(
+            f"CUSTOM_GENE_LIST contains {len(custom_genes)} genes, "
+            f"but n_genes={n_genes}."
+        )
+
+    random_genes = (
+        pd.Series(remaining)
         .sample(
-            n=n_genes,
+            n=n_random,
             random_state=random_state,
             replace=False
         )
         .tolist()
     )
+
+    genes = custom_genes + random_genes
 
     for name in ["rna", "cnv", "snv"]:
         data[name] = data[name][genes]
