@@ -7,9 +7,11 @@ from sklearn.decomposition import PCA
 
 # Load embeddings
 emb = pd.read_csv(
-    "gene_embeddings.csv",
-    index_col="gene"
+    "gene_embeddings_epoch_10.csv",
+    index_col=0
 )
+
+emb.index.name = "gene"
 
 # Convert to tensor
 X = torch.tensor(
@@ -137,3 +139,6 @@ print("\nExplained variance:")
 variance = s**2 / np.sum(s**2)
 
 print(variance[:20])
+
+print("MTOR:")
+print(get_neighbors("MTOR"))
